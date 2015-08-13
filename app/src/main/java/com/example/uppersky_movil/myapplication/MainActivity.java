@@ -2,9 +2,7 @@ package com.example.uppersky_movil.myapplication;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -12,8 +10,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 
+import com.example.uppersky_movil.myapplication.utils.GPSTracker;
+import com.example.uppersky_movil.myapplication.utils.PreferenceUtils;
 import com.getbase.floatingactionbutton.FloatingActionButton;
 import com.getbase.floatingactionbutton.FloatingActionsMenu;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.model.LatLng;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -21,8 +25,10 @@ import butterknife.InjectView;
 
 public class MainActivity extends BaseActivity {
 
-
+    private GPSTracker gps;
+    private GoogleMap mGoogleMap;
     private static final String TAG = "Main";
+    private PreferenceUtils mPreferences;
     @InjectView(R.id.tool_bar)  Toolbar mToolbar;
 
     @Override
@@ -35,6 +41,16 @@ public class MainActivity extends BaseActivity {
     }
 
     private void init() {
+
+        final LatLng location;
+
+        // init Preferences
+
+        mPreferences = PreferenceUtils.getInstance(this);
+
+        // Init GPS Location
+
+        initGPSLocation();
 
         // Inflate Activity View
 
@@ -71,9 +87,43 @@ public class MainActivity extends BaseActivity {
         menuMultipleActions.addButton(actionC);
 
 
+        // Google Maps
+
+
+        if (mGoogleMap == null) {
+
+            mGoogleMap = ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
+        }
+
+        mGoogleMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+
+        location = new LatLng(mPreferences.getLatitude(), mPreferences.getLongitude());
+
+        moveToLocation(location);
+
     }
 
+    private void initGPSLocation() {
 
+        gps = new GPSTracker(MainActivity.this);
+
+        // check if GPS enabled
+
+        if(gps.canGetLocation()) {
+
+            mPreferences.setLongitude((float) gps.getLongitude());
+
+            mPreferences.setLatitude((float) gps.getLatitude());
+
+        } else {
+
+            // Ask user to enable GPS/network in settings
+
+            gps.showSettingsAlert();
+
+        }
+
+    }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         return super.onCreateOptionsMenu(menu);
@@ -90,4 +140,22 @@ public class MainActivity extends BaseActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    public void setUpMapIfNeeded() {
+
+        if (mGoogleMap == null) {
+
+            mGoogleMap = ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
+        }
+    }
+
+    private void moveToLocation(LatLng currentLocation)
+    {
+
+        mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 15));
+
+        mGoogleMap.animateCamera(CameraUpdateFactory.zoomIn());
+
+        mGoogleMap.animateCamera(CameraUpdateFactory.zoomTo(15), 2000, null);
+
+    }
 }

@@ -32,4 +32,11 @@ dependencies {
     // Floating button
 
     compile 'com.getbase:floatingactionbutton:1.10.0'
+
+    // Google Play Services
+
+    compile 'com.google.android.gms:play-services:7.5.0'
+
+    // Google Maps
+    compile 'com.google.maps.android:android-maps-utils:0.3'
 }
